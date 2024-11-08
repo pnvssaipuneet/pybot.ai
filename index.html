@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Teacher Bot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #chat-container {
+            border: 1px solid #ccc;
+            padding: 20px;
+            height: 400px;
+            overflow-y: scroll;
+            margin-bottom: 20px;
+        }
+        #user-input {
+            width: 70%;
+            padding: 10px;
+        }
+        #send-button {
+            width: 25%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #level-select {
+            margin-bottom: 20px;
+            padding: 10px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Python Teacher Bot</h1>
+    <select id="level-select">
+        <option value="">Select your level</option>
+        <option value="1">Beginner (starting from very basics)</option>
+        <option value="2">Intermediate (assuming you know the basics)</option>
+        <option value="3">Advanced (practice questions)</option>
+    </select>
+    <div id="chat-container"></div>
+    <input type="text" id="user-input" placeholder="Type your message...">
+    <button id="send-button">Send</button>
+
+    <script>
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const levelSelect = document.getElementById('level-select');
+
+        function addMessage(sender, message) {
+            const messageElement = document.createElement('p');
+            messageElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
+            chatContainer.appendChild(messageElement);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            const level = levelSelect.value;
+            if (message && level) {
+                addMessage('You', message);
+                fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        level: level
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    addMessage('Bot', data.response);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    addMessage('Bot', 'Sorry, there was an error processing your request.');
+                });
+                userInput.value = '';
+            } else if (!level) {
+                alert('Please select your level first!');
+            }
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        levelSelect.addEventListener('change', function() {
+            chatContainer.innerHTML = '';
+            addMessage('Bot', `Great! You've selected ${levelSelect.options[levelSelect.selectedIndex].text}. Type 'resource' for learning materials, 'topic' to change the topic, or start asking questions!`);
+        });
+
+        // Initial greeting
+        addMessage('Bot', 'Welcome to the Python Teacher Bot! Please select your level to begin.');
+    </script>
+</body>
+</html>
